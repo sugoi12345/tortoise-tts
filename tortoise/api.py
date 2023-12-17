@@ -186,32 +186,32 @@ class TextToSpeech:
 
         if os.path.exists(f'{models_dir}/autoregressive.ptt'):
             # Assume this is a traced directory.
-            self.autoregressive = torch.jit.load(f'{models_dir}/autoregressive.ptt')
-            self.diffusion = torch.jit.load(f'{models_dir}/diffusion_decoder.ptt')
+            self.autoregressive = torch.jit.load(f'{models_dir}/autoregressive.ptt', map_location=torch.device('cpu'))
+            self.diffusion = torch.jit.load(f'{models_dir}/diffusion_decoder.ptt', map_location=torch.device('cpu'))
         else:
             self.autoregressive = UnifiedVoice(max_mel_tokens=604, max_text_tokens=402, max_conditioning_inputs=2, layers=30,
                                           model_dim=1024,
                                           heads=16, number_text_tokens=255, start_text_token=255, checkpointing=False,
                                           train_solo_embeddings=False).cpu().eval()
-            self.autoregressive.load_state_dict(torch.load(f'{models_dir}/autoregressive.pth'))
+            self.autoregressive.load_state_dict(torch.load(f'{models_dir}/autoregressive.pth', map_location=torch.device('cpu')))
 
             self.diffusion = DiffusionTts(model_channels=1024, num_layers=10, in_channels=100, out_channels=200,
                                           in_latent_channels=1024, in_tokens=8193, dropout=0, use_fp16=False, num_heads=16,
                                           layer_drop=0, unconditioned_percentage=0).cpu().eval()
-            self.diffusion.load_state_dict(torch.load(f'{models_dir}/diffusion_decoder.pth'))
+            self.diffusion.load_state_dict(torch.load(f'{models_dir}/diffusion_decoder.pth', map_location=torch.device('cpu')))
 
         self.clvp = CLVP(dim_text=768, dim_speech=768, dim_latent=768, num_text_tokens=256, text_enc_depth=20,
                          text_seq_len=350, text_heads=12,
                          num_speech_tokens=8192, speech_enc_depth=20, speech_heads=12, speech_seq_len=430,
                          use_xformers=True).cpu().eval()
-        self.clvp.load_state_dict(torch.load(f'{models_dir}/clvp2.pth'))
+        self.clvp.load_state_dict(torch.load(f'{models_dir}/clvp2.pth', map_location=torch.device('cpu')))
 
         self.cvvp = CVVP(model_dim=512, transformer_heads=8, dropout=0, mel_codes=8192, conditioning_enc_depth=8, cond_mask_percentage=0,
                          speech_enc_depth=8, speech_mask_percentage=0, latent_multiplier=1).cpu().eval()
-        self.cvvp.load_state_dict(torch.load(f'{models_dir}/cvvp.pth'))
+        self.cvvp.load_state_dict(torch.load(f'{models_dir}/cvvp.pth', map_location=torch.device('cpu')))
 
         self.vocoder = UnivNetGenerator().cpu()
-        self.vocoder.load_state_dict(torch.load(f'{models_dir}/vocoder.pth')['model_g'])
+        self.vocoder.load_state_dict(torch.load(f'{models_dir}/vocoder.pth')['model_g'], map_location=torch.device('cpu'))
         self.vocoder.eval(inference=True)
 
         # Random latent generators (RLGs) are loaded lazily.
